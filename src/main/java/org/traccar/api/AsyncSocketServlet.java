@@ -23,11 +23,16 @@ import org.traccar.config.Config;
 import org.traccar.config.Keys;
 import org.traccar.session.ConnectionManager;
 import org.traccar.storage.Storage;
+import org.traccar.api.security.LoginResult;
+import org.traccar.api.security.LoginService;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpSession;
 import java.time.Duration;
+import org.traccar.storage.StorageException;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 
 @Singleton
 public class AsyncSocketServlet extends JettyWebSocketServlet {
@@ -36,6 +41,11 @@ public class AsyncSocketServlet extends JettyWebSocketServlet {
     private final ObjectMapper objectMapper;
     private final ConnectionManager connectionManager;
     private final Storage storage;
+
+    private static final String KEY_TOKEN = "token";
+
+    @Inject
+    private LoginService loginService;
 
     @Inject
     public AsyncSocketServlet(
@@ -54,6 +64,16 @@ public class AsyncSocketServlet extends JettyWebSocketServlet {
                 Long userId = (Long) ((HttpSession) req.getSession()).getAttribute(SessionResource.USER_ID_KEY);
                 if (userId != null) {
                     return new AsyncSocket(objectMapper, connectionManager, storage, userId);
+                }
+            } else if (req.getQueryString().contains(KEY_TOKEN)) {
+                String token = (String) req.getParameterMap().get(KEY_TOKEN).get(0);
+                try {
+                    LoginResult loginResult = loginService.login(token);
+                    if (loginResult.getUser() != null) {
+                        return new AsyncSocket(objectMapper, connectionManager, storage, loginResult.getUser().getId());
+                    }
+                } catch (StorageException | GeneralSecurityException | IOException e) {
+                    return null;
                 }
             }
             return null;
