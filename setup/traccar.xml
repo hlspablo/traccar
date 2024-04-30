@@ -7,6 +7,9 @@
     <!-- <entry key='database.user'>sa</entry> -->
     <!-- <entry key='database.password'></entry> -->
 
+
+    <entry key='web.console'>true</entry>
+    <entry key='logger.console'>true</entry>
     <entry key='database.driver'>org.postgresql.Driver</entry>
     <entry key='database.url'>jdbc:postgresql://aws-0-sa-east-1.pooler.supabase.com/postgres</entry>
     <entry key='database.user'>postgres.tevyvxrhhyvlzirnsadt</entry>
