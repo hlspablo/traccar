@@ -89,6 +89,18 @@ public class User extends ExtendedModel implements UserRestrictions, Disableable
         return administrator;
     }
 
+    private String token;
+
+    @QueryIgnore
+    public String getToken() {
+        return token;
+    }
+
+    @QueryIgnore
+    public void setToken(String token) {
+        this.token = token;
+    }
+
     public void setAdministrator(boolean administrator) {
         this.administrator = administrator;
     }

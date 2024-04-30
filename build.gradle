@@ -114,3 +114,4 @@ jar {
                 "Class-Path": configurations.runtimeClasspath.files.collect { "lib/$it.name" }.join(" "))
     }
 }
+

@@ -42,6 +42,7 @@ public final class LogAction {
 
     private static final String ACTION_LOGIN = "login";
     private static final String ACTION_LOGOUT = "logout";
+    private static final String ACTION_RENEW = "renew";
 
     private static final String ACTION_DEVICE_ACCUMULATORS = "resetDeviceAccumulators";
 
@@ -74,6 +75,10 @@ public final class LogAction {
 
     public static void login(long userId, String remoteAddress) {
         logLoginAction(ACTION_LOGIN, userId, remoteAddress);
+    }
+
+    public static void renew(long userId, String remoteAddress) {
+        logLoginAction(ACTION_RENEW, userId, remoteAddress);
     }
 
     public static void logout(long userId, String remoteAddress) {

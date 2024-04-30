@@ -20,6 +20,7 @@ import org.traccar.api.security.CodeRequiredException;
 import org.traccar.api.security.LoginResult;
 import org.traccar.api.security.LoginService;
 import org.traccar.api.signature.TokenManager;
+import org.traccar.api.signature.TokenManager.TokenData;
 import org.traccar.database.OpenIdProvider;
 import org.traccar.helper.LogAction;
 import org.traccar.helper.WebHelper;
@@ -115,7 +116,7 @@ public class SessionResource extends BaseResource {
     public User add(
             @FormParam("email") String email,
             @FormParam("password") String password,
-            @FormParam("code") Integer code) throws StorageException {
+            @FormParam("code") Integer code) throws StorageException, IOException, GeneralSecurityException {
         LoginResult loginResult;
         try {
             loginResult = loginService.login(email, password, code);
@@ -129,6 +130,8 @@ public class SessionResource extends BaseResource {
         if (loginResult != null) {
             User user = loginResult.getUser();
             request.getSession().setAttribute(USER_ID_KEY, user.getId());
+            String token = tokenManager.generateToken(user.getId(), null);
+            user.setToken(token);
             LogAction.login(user.getId(), WebHelper.retrieveRemoteAddress(request));
             return user;
         } else {
@@ -144,17 +147,39 @@ public class SessionResource extends BaseResource {
         return Response.noContent().build();
     }
 
-    @Path("token")
-    @POST
-    public String requestToken(
-            @FormParam("expiration") Date expiration,
-            @FormParam("email") String email) throws StorageException, GeneralSecurityException, IOException {
+    @Path("renew")
+    @PermitAll
+    @GET
+    public String renew(@QueryParam("token") String token)
+            throws StorageException, GeneralSecurityException, IOException {
 
-        permissionsService.checkAdmin(getUserId());
+        TokenData tokenData = tokenManager.isTokenValid(token);
+        if (tokenData.getExpiration().after(new Date())) {
+            return token;
+        }
+
         User user = storage.getObject(User.class, new Request(
-                new Columns.All(), new Condition.Equals("email", email)));
-        return tokenManager.generateToken(user.getId(), expiration);
+                new Columns.All(), new Condition.Equals("id", tokenData.getUserId())));
+
+        user.checkDisabled();
+        LogAction.renew(getUserId(), WebHelper.retrieveRemoteAddress(request));
+
+        // expiration defaults to 7 days, so we don't need to set it here
+        return tokenManager.generateToken(tokenData.getUserId(), null);
     }
+
+    // @Path("token")
+    // @POST
+    // public String requestToken(
+    // @FormParam("expiration") Date expiration,
+    // @FormParam("email") String email) throws StorageException,
+    // GeneralSecurityException, IOException {
+    //
+    // permissionsService.checkAdmin(getUserId());
+    // User user = storage.getObject(User.class, new Request(
+    // new Columns.All(), new Condition.Equals("email", email)));
+    // return tokenManager.generateToken(user.getId(), expiration);
+    // }
 
     @PermitAll
     @Path("openid/auth")

@@ -102,8 +102,8 @@ public class LoginService {
 
     public LoginResult login(String email, String name, boolean administrator) throws StorageException {
         User user = storage.getObject(User.class, new Request(
-            new Columns.All(),
-            new Condition.Equals("email", email)));
+                new Columns.All(),
+                new Condition.Equals("email", email)));
 
         if (user == null) {
             user = new User();

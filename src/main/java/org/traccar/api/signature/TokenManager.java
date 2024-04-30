@@ -82,4 +82,10 @@ public class TokenManager {
         return data;
     }
 
+    public TokenData isTokenValid(String token) throws IOException, GeneralSecurityException, StorageException {
+        byte[] encoded = cryptoManager.verify(Base64.decodeBase64(token));
+        TokenData data = objectMapper.readValue(encoded, TokenData.class);
+        return data;
+    }
+
 }
