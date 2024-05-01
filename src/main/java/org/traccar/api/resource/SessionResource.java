@@ -168,19 +168,6 @@ public class SessionResource extends BaseResource {
         return tokenManager.generateToken(tokenData.getUserId(), null);
     }
 
-    // @Path("token")
-    // @POST
-    // public String requestToken(
-    // @FormParam("expiration") Date expiration,
-    // @FormParam("email") String email) throws StorageException,
-    // GeneralSecurityException, IOException {
-    //
-    // permissionsService.checkAdmin(getUserId());
-    // User user = storage.getObject(User.class, new Request(
-    // new Columns.All(), new Condition.Equals("email", email)));
-    // return tokenManager.generateToken(user.getId(), expiration);
-    // }
-
     @PermitAll
     @Path("openid/auth")
     @GET
