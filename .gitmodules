@@ -1,0 +1,5 @@
+[submodule "traccar-web"]
+	path = traccar-web
+	url = https://github.com/hlspablo/traccar-web.git
+	branch = master
+	ignore = all

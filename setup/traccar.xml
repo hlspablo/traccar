@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE properties SYSTEM 'http://java.sun.com/dtd/properties.dtd'>
+<properties>
+
+    <!-- <entry key='database.driver'>org.h2.Driver</entry> -->
+    <!-- <entry key='database.url'>jdbc:h2:./data/database</entry> -->
+    <!-- <entry key='database.user'>sa</entry> -->
+    <!-- <entry key='database.password'></entry> -->
+
+    <entry key='database.driver'>org.postgresql.Driver</entry>
+    <entry key='database.url'>jdbc:postgresql://aws-0-sa-east-1.pooler.supabase.com/postgres</entry>
+    <entry key='database.user'>postgres.tevyvxrhhyvlzirnsadt</entry>
+    <entry key='database.password'>CBg4iFCmeoVLzAUs</entry>
+    <entry key='database.registerUnknown'>false</entry>
+
+    <entry key='web.requestLog.path'>./logs/jetty-yyyy_mm_dd.request.log</entry>
+    <entry key='web.sameSiteCookie'>Lax</entry>
+    <entry key='web.persistSession'>true</entry>
+    <entry key='web.timeout'>1800000</entry>
+    <entry key='web.origin'>*</entry>
+    <entry key='web.port'>80</entry>
+
+    <entry key='logger.console'>true</entry>
+    <entry key='logger.queries'>false</entry>
+    <entry key='logger.fullStackTraces'>true</entry>
+
+    <entry key='mail.debug'>true</entry>
+
+</properties>
