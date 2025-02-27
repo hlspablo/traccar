@@ -83,7 +83,7 @@ fi
 prepare () {
   mkdir -p out/{conf,data,lib,logs,web,schema,templates}
 
-  cp ../target/tracker-server.jar out
+  cp ../target/2tracker-server.jar out
   cp ../target/lib/* out/lib
   cp ../schema/* out/schema
   cp -r ../templates/* out/templates

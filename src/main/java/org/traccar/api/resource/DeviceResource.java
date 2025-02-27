@@ -16,6 +16,9 @@
 package org.traccar.api.resource;
 
 import jakarta.ws.rs.FormParam;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.traccar.api.BaseObjectResource;
 import org.traccar.api.signature.TokenManager;
 import org.traccar.broadcast.BroadcastService;
@@ -64,6 +67,8 @@ public class DeviceResource extends BaseObjectResource<Device> {
 
     private static final int DEFAULT_BUFFER_SIZE = 8192;
     private static final int IMAGE_SIZE_LIMIT = 500000;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DeviceResource.class);
 
     @Inject
     private Config config;
@@ -247,20 +252,26 @@ public class DeviceResource extends BaseObjectResource<Device> {
         User share = storage.getObject(User.class, new Request(
                 new Columns.All(), new Condition.Equals("email", shareEmail)));
 
-        if (share == null) {
-            share = new User();
-            share.setName(device.getName());
-            share.setEmail(shareEmail);
-            share.setExpirationTime(expiration);
-            share.setTemporary(true);
-            share.setReadonly(true);
-            share.setLimitCommands(user.getLimitCommands() || !config.getBoolean(Keys.WEB_SHARE_DEVICE_COMMANDS));
-            share.setDisableReports(user.getDisableReports() || !config.getBoolean(Keys.WEB_SHARE_DEVICE_REPORTS));
-
-            share.setId(storage.addObject(share, new Request(new Columns.Exclude("id"))));
-
-            storage.addPermission(new Permission(User.class, share.getId(), Device.class, deviceId));
+        if(share != null) {
+            try{
+                storage.removeObject(User.class, new Request(new Condition.Equals("id", share.getId())));
+            } catch (StorageException e) {
+                LOGGER.warn("Failed to delete temporary user", e);
+            }
         }
+
+        share = new User();
+        share.setName(device.getName());
+        share.setEmail(shareEmail);
+        share.setExpirationTime(expiration);
+        share.setTemporary(true);
+        share.setReadonly(true);
+        share.setLimitCommands(user.getLimitCommands() || !config.getBoolean(Keys.WEB_SHARE_DEVICE_COMMANDS));
+        share.setDisableReports(user.getDisableReports() || !config.getBoolean(Keys.WEB_SHARE_DEVICE_REPORTS));
+
+        share.setId(storage.addObject(share, new Request(new Columns.Exclude("id"))));
+
+        storage.addPermission(new Permission(User.class, share.getId(), Device.class, deviceId));
 
         return tokenManager.generateToken(share.getId(), expiration);
     }

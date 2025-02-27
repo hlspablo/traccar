@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.websocket.server.JettyWebSocketServlet;
 import org.eclipse.jetty.websocket.server.JettyWebSocketServletFactory;
 import org.traccar.api.resource.SessionResource;
+import org.traccar.api.security.LoginResult;
 import org.traccar.api.security.LoginService;
 import org.traccar.config.Config;
 import org.traccar.config.Keys;
@@ -33,6 +34,7 @@ import org.traccar.storage.StorageException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
+import java.util.Date;
 import java.util.List;
 
 @Singleton
@@ -60,19 +62,23 @@ public class AsyncSocketServlet extends JettyWebSocketServlet {
         factory.setIdleTimeout(Duration.ofMillis(config.getLong(Keys.WEB_TIMEOUT)));
         factory.setCreator((req, resp) -> {
             Long userId = null;
+            Date tokenExpiration = null;
             List<String> tokens = req.getParameterMap().get("token");
             if (tokens != null && !tokens.isEmpty()) {
                 String token = tokens.iterator().next();
                 try {
-                    userId = loginService.login(token).getUser().getId();
+                    LoginResult loginResult = loginService.login(token);
+                    userId = loginResult.getUser().getId();
+                    tokenExpiration = loginResult.getExpiration();
                 } catch (StorageException | GeneralSecurityException | IOException e) {
                     throw new RuntimeException(e);
                 }
             } else if (req.getSession() != null) {
                 userId = (Long) ((HttpSession) req.getSession()).getAttribute(SessionResource.USER_ID_KEY);
+                tokenExpiration = (Date) ((HttpSession) req.getSession()).getAttribute(SessionResource.EXPIRATION_KEY);
             }
             if (userId != null) {
-                return new AsyncSocket(objectMapper, connectionManager, storage, userId);
+                return new AsyncSocket(objectMapper, connectionManager, storage, userId, tokenExpiration);
             }
             return null;
         });

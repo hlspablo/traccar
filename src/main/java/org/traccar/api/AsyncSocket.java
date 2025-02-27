@@ -31,9 +31,12 @@ import org.traccar.storage.Storage;
 import org.traccar.storage.StorageException;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class AsyncSocket extends WebSocketAdapter implements ConnectionManager.UpdateListener {
 
@@ -48,14 +51,16 @@ public class AsyncSocket extends WebSocketAdapter implements ConnectionManager.U
     private final ConnectionManager connectionManager;
     private final Storage storage;
     private final long userId;
+    private final Date tokenExpiration;
 
     private boolean includeLogs;
 
-    public AsyncSocket(ObjectMapper objectMapper, ConnectionManager connectionManager, Storage storage, long userId) {
+    public AsyncSocket(ObjectMapper objectMapper, ConnectionManager connectionManager, Storage storage, long userId, Date tokenExpiration) {
         this.objectMapper = objectMapper;
         this.connectionManager = connectionManager;
         this.storage = storage;
         this.userId = userId;
+        this.tokenExpiration = tokenExpiration;
     }
 
     @Override
@@ -69,6 +74,28 @@ public class AsyncSocket extends WebSocketAdapter implements ConnectionManager.U
             connectionManager.addListener(userId, this);
         } catch (StorageException e) {
             throw new RuntimeException(e);
+        }
+
+        // Schedule a task to close the connection when the token expires
+        if (tokenExpiration != null) {
+            long currentTime = System.currentTimeMillis();
+            long tokenTime = tokenExpiration.getTime();
+            long delay = tokenTime - currentTime;
+            if (delay > 0) {
+                Timer expirationTimer = new Timer();
+                expirationTimer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        // Close the WebSocket connection on token expiration
+                        if (isConnected()) {
+                            getSession().close(4001, "Token expired");
+                        }
+                    }
+                }, delay);
+            } else {
+                // If the token is already expired, close immediately
+                getSession().close(4001, "Token expired");
+            }
         }
     }
 
