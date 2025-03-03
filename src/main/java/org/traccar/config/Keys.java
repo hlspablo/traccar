@@ -84,6 +84,13 @@ public final class Keys {
             List.of(KeyType.CONFIG));
 
     /**
+     * Expo Access Token.
+     */
+    public static final ConfigKey<String> EXPO_ACCESS_TOKEN = new StringConfigKey(
+            "expoAccessToken",
+            List.of(KeyType.CONFIG));
+
+    /**
      * Default protocol mask to use. Currently used only by Skypatrol protocol.
      */
     public static final ConfigSuffix<Integer> PROTOCOL_MASK = new IntegerConfigSuffix(

@@ -22,6 +22,7 @@ import org.traccar.config.Keys;
 import org.traccar.model.Typed;
 import org.traccar.notificators.Notificator;
 import org.traccar.notificators.NotificatorCommand;
+import org.traccar.notificators.NotificatorExpo;
 import org.traccar.notificators.NotificatorFirebase;
 import org.traccar.notificators.NotificatorMail;
 import org.traccar.notificators.NotificatorPushover;
@@ -46,7 +47,7 @@ public class NotificatorManager {
             "web", NotificatorWeb.class,
             "mail", NotificatorMail.class,
             "sms", NotificatorSms.class,
-            "firebase", NotificatorFirebase.class,
+            "firebase", NotificatorExpo.class,
             "traccar", NotificatorTraccar.class,
             "telegram", NotificatorTelegram.class,
             "pushover", NotificatorPushover.class);

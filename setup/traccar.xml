@@ -11,6 +11,9 @@
     <entry key='database.user'>postgres.tevyvxrhhyvlzirnsadt</entry>
     <entry key='database.password'>CBg4iFCmeoVLzAUs</entry>
 
+    <entry key='notificator.types'>firebase,sms,command</entry>
+
+    <entry key='expoAccessToken'>Xy8leQoTP87IMAao3i-A55PAwu-xge4HVIp-kGvw</entry>
     <entry key='geocoder.enable'>true</entry>
     <entry key='geocoder.type'>nominatim</entry>
     <entry key='geocoder.url'>http://coragemserver.top/nominatim/reverse</entry>
