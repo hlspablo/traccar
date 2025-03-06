@@ -23,6 +23,7 @@ import org.traccar.api.security.LoginResult;
 import org.traccar.api.security.LoginService;
 import org.traccar.config.Config;
 import org.traccar.config.Keys;
+import org.traccar.model.User;
 import org.traccar.session.ConnectionManager;
 import org.traccar.storage.Storage;
 
@@ -30,6 +31,9 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpSession;
 import org.traccar.storage.StorageException;
+import org.traccar.storage.query.Columns;
+import org.traccar.storage.query.Condition;
+import org.traccar.storage.query.Request;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -62,23 +66,28 @@ public class AsyncSocketServlet extends JettyWebSocketServlet {
         factory.setIdleTimeout(Duration.ofMillis(config.getLong(Keys.WEB_TIMEOUT)));
         factory.setCreator((req, resp) -> {
             Long userId = null;
-            Date tokenExpiration = null;
+
             List<String> tokens = req.getParameterMap().get("token");
             if (tokens != null && !tokens.isEmpty()) {
                 String token = tokens.iterator().next();
                 try {
                     LoginResult loginResult = loginService.login(token);
                     userId = loginResult.getUser().getId();
-                    tokenExpiration = loginResult.getExpiration();
                 } catch (StorageException | GeneralSecurityException | IOException e) {
                     throw new RuntimeException(e);
                 }
             } else if (req.getSession() != null) {
                 userId = (Long) ((HttpSession) req.getSession()).getAttribute(SessionResource.USER_ID_KEY);
-                tokenExpiration = (Date) ((HttpSession) req.getSession()).getAttribute(SessionResource.EXPIRATION_KEY);
             }
             if (userId != null) {
-                return new AsyncSocket(objectMapper, connectionManager, storage, userId, tokenExpiration);
+                User dbUser;
+                try {
+                    dbUser = storage.getObject(User.class, new Request(
+                            new Columns.All(), new Condition.Equals("id", userId)));
+                } catch (StorageException e) {
+                    throw new RuntimeException(e);
+                }
+                return new AsyncSocket(objectMapper, connectionManager, storage, userId, dbUser.getExpirationTime());
             }
             return null;
         });

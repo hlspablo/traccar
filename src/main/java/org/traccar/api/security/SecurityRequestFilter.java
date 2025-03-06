@@ -81,11 +81,10 @@ public class SecurityRequestFilter implements ContainerRequestFilter {
                 try {
                     String[] auth = authHeader.split(" ");
                     LoginResult loginResult = loginService.login(auth[0], auth[1]);
-                    Date tokenExpiration = loginResult.getExpiration();
                     User user = loginResult.getUser();
                     statisticsManager.registerRequest(user.getId());
 
-                    checkExpiration(user, tokenExpiration);
+                    checkExpiration(user);
 
                     securityContext = new UserSecurityContext(
                             new UserPrincipal(user.getId(), loginResult.getExpiration()));
@@ -103,7 +102,7 @@ public class SecurityRequestFilter implements ContainerRequestFilter {
                         user.checkDisabled();
                         statisticsManager.registerRequest(userId);
 
-                        checkExpiration(user, expiration);
+                        checkExpiration(user);
 
                         securityContext = new UserSecurityContext(new UserPrincipal(userId, expiration));
                     }
@@ -126,13 +125,13 @@ public class SecurityRequestFilter implements ContainerRequestFilter {
 
     }
 
-    private void checkExpiration(User user, Date tokenExpiration) throws StorageException {
+    private void checkExpiration(User user) throws StorageException {
         // Retrieve current user data from the database
         User dbUser = storage.getObject(User.class, new Request(
                 new Columns.All(), new Condition.Equals("id", user.getId())));
 
         if (dbUser != null && dbUser.getExpirationTime() != null) {
-            if (tokenExpiration.after(dbUser.getExpirationTime()) || dbUser.getExpirationTime().before(new Date())) {
+            if (dbUser.getExpirationTime().before(new Date())) {
                 rejectRequest();
             }
         }
