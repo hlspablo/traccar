@@ -64,11 +64,10 @@ public class TokenManager {
             long userId, Date expiration) throws IOException, GeneralSecurityException, StorageException {
         TokenData data = new TokenData();
         data.userId = userId;
-        if (expiration != null) {
-            data.expiration = expiration;
-        } else {
-            data.expiration = new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(DEFAULT_EXPIRATION_DAYS));
-        }
+        data.expiration = expiration;
+
+        // data.expiration = new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(DEFAULT_EXPIRATION_DAYS));
+
         byte[] encoded = objectMapper.writeValueAsBytes(data);
         return Base64.encodeBase64URLSafeString(cryptoManager.sign(encoded));
     }

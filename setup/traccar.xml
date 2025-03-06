@@ -11,7 +11,16 @@
     <entry key='database.user'>postgres.tevyvxrhhyvlzirnsadt</entry>
     <entry key='database.password'>CBg4iFCmeoVLzAUs</entry>
 
-    <entry key='notificator.types'>firebase,sms,command</entry>
+    <entry key='notificator.types'>firebase,sms,command,mail</entry>
+
+    <entry key='mail.smtp.port'>587</entry>
+    <entry key='mail.smtp.starttls.enable'>true</entry>
+    <entry key='mail.smtp.host'>smtp.gmail.com</entry>
+    <entry key='mail.smtp.from'>pabllobeg@gmail.com</entry>
+    <entry key='mail.smtp.auth'>true</entry>
+    <entry key='mail.smtp.username'>pabllobeg@gmail.com</entry>
+    <entry key='mail.smtp.password'>dgwrtqhzljscaurp</entry>
+    <entry key='web.url'>https://coragemrastro.com.br</entry>
 
     <entry key='expoAccessToken'>Xy8leQoTP87IMAao3i-A55PAwu-xge4HVIp-kGvw</entry>
     <entry key='geocoder.enable'>true</entry>
@@ -24,14 +33,14 @@
     <entry key='database.registerUnknown'>false</entry>
     <entry key='web.requestLog.path'>./logs/jetty-yyyy_mm_dd.request.log</entry>
     <entry key='web.sameSiteCookie'>Lax</entry>
-    <entry key='web.persistSession'>true</entry>
-    <entry key='web.timeout'>1800000</entry>
+    <!-- Persist jetty sessions to database -->
+    <entry key='web.persistSession'>false</entry>
+    <!-- Socket timeout -->
+    <entry key='web.timeout'>60000</entry>
     <entry key='web.origin'>*</entry>
     <entry key='web.port'>80</entry>
 
     <entry key='logger.console'>true</entry>
     <entry key='logger.queries'>false</entry>
     <entry key='logger.fullStackTraces'>true</entry>
-
-    <entry key='mail.debug'>true</entry>
 </properties>

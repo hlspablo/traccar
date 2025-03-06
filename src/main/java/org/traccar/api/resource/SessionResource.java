@@ -129,7 +129,8 @@ public class SessionResource extends BaseResource {
         if (loginResult != null) {
             User user = loginResult.getUser();
             request.getSession().setAttribute(USER_ID_KEY, user.getId());
-            String token = tokenManager.generateToken(user.getId(), null);
+            request.getSession().setAttribute(EXPIRATION_KEY, user.getExpirationTime());
+            String token = tokenManager.generateToken(user.getId(), user.getExpirationTime());
             user.setToken(token);
 
             LogAction.login(user.getId(), WebHelper.retrieveRemoteAddress(request));
@@ -145,38 +146,6 @@ public class SessionResource extends BaseResource {
         LogAction.logout(getUserId(), WebHelper.retrieveRemoteAddress(request));
         request.getSession().removeAttribute(USER_ID_KEY);
         return Response.noContent().build();
-    }
-
-    @Path("renew")
-    @PermitAll
-    @GET
-    public String renew(@QueryParam("token") String token)
-            throws StorageException, GeneralSecurityException, IOException {
-
-        TokenManager.TokenData tokenData = tokenManager.isTokenValid(token);
-        if (tokenData.getExpiration().after(new Date())) {
-            return token;
-        }
-
-        User user = storage.getObject(User.class, new Request(
-                new Columns.All(), new Condition.Equals("id", tokenData.getUserId())));
-
-        user.checkDisabled();
-        LogAction.renew(getUserId(), WebHelper.retrieveRemoteAddress(request));
-
-        // expiration defaults to 7 days, so we don't need to set it here
-        return tokenManager.generateToken(tokenData.getUserId(), null);
-    }
-
-    @Path("token")
-    @POST
-    public String requestToken(
-            @FormParam("expiration") Date expiration) throws StorageException, GeneralSecurityException, IOException {
-        Date currentExpiration = (Date) request.getSession().getAttribute(EXPIRATION_KEY);
-        if (currentExpiration != null && currentExpiration.before(expiration)) {
-            expiration = currentExpiration;
-        }
-        return tokenManager.generateToken(getUserId(), expiration);
     }
 
     @PermitAll

@@ -63,5 +63,4 @@ public class CorsResponseFilter implements ContainerResponseFilter {
             }
         }
     }
-
 }
