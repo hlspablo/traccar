@@ -24,9 +24,8 @@ RUN set -ex; \
 # create required folders
 RUN mkdir -p data logs
 
-COPY target/lib ./lib
-
 # Copy the built jar from the builder stage
+COPY --from=builder /app/target/lib ./lib
 COPY --from=builder /app/target/tracker-server.jar ./tracker-server.jar
 
 # media, conf, schema, templates and web are from NFS
