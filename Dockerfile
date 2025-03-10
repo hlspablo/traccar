@@ -21,9 +21,9 @@ RUN set -ex; \
       wget; \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Copy your application jar and directories
-COPY setup/out/data ./data
-COPY setup/out/logs ./logs
+# create required folders
+RUN mkdir -p data logs
+
 COPY target/lib ./lib
 
 # Copy the built jar from the builder stage

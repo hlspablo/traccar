@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-and-push:
-    name: Build and push Docker image
+    name: Build, Push, and Deploy Docker Image
     runs-on: ubuntu-latest
     permissions:
       contents: read
