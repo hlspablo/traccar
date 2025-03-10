@@ -74,16 +74,6 @@ public class TokenManager {
 
     public TokenData verifyToken(String token) throws IOException, GeneralSecurityException, StorageException {
         byte[] encoded = cryptoManager.verify(Base64.decodeBase64(token));
-        TokenData data = objectMapper.readValue(encoded, TokenData.class);
-        if (data.expiration.before(new Date())) {
-            throw new SecurityException("Token has expired");
-        }
-        return data;
-    }
-
-    public TokenData isTokenValid(String token) throws IOException, GeneralSecurityException, StorageException {
-        byte[] encoded = cryptoManager.verify(Base64.decodeBase64(token));
         return objectMapper.readValue(encoded, TokenData.class);
     }
-
 }
