@@ -25,8 +25,11 @@ RUN set -ex; \
 RUN mkdir -p data logs
 
 # Copy the built jar from the builder stage
+COPY --from=builder /app/schema ./schema
+COPY --from=builder /app/templates ./templates
 COPY --from=builder /app/target/lib ./lib
 COPY --from=builder /app/target/tracker-server.jar ./tracker-server.jar
+
 
 # media, conf, schema, templates and web are from NFS
 # Set the entrypoint to run your jar with config file
