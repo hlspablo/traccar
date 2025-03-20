@@ -13,32 +13,30 @@
 
     <entry key='notificator.types'>firebase,sms,command,mail</entry>
 
-    <entry key='mail.smtp.port'>587</entry>
-    <entry key='mail.smtp.starttls.enable'>true</entry>
-    <entry key='mail.smtp.host'>smtp.gmail.com</entry>
-    <entry key='mail.smtp.from'>pabllobeg@gmail.com</entry>
+    <!-- <entry key='mail.smtp.port'>587</entry> -->
+    <!-- <entry key='mail.smtp.starttls.enable'>true</entry> -->
+    <!-- <entry key='mail.smtp.host'>smtp.mailgun.org</entry>
+    <entry key='mail.smtp.from'>postmaster@conta.coragemrastro.top</entry>
     <entry key='mail.smtp.auth'>true</entry>
-    <entry key='mail.smtp.username'>pabllobeg@gmail.com</entry>
-    <entry key='mail.smtp.password'>dgwrtqhzljscaurp</entry>
-    <entry key='web.url'>https://coragemrastro.com.br</entry>
+    <entry key='mail.smtp.username'>postmaster@conta.coragemrastro.top</entry>
+    <entry key='mail.smtp.password'>a906f32ea8d606a27e8960119a98a920-623424ea-96be1dd6</entry> -->
 
+
+    <entry key='web.url'>https://coragemrastro.top</entry>
     <entry key='expoAccessToken'>Xy8leQoTP87IMAao3i-A55PAwu-xge4HVIp-kGvw</entry>
     <entry key='geocoder.enable'>true</entry>
     <entry key='geocoder.type'>nominatim</entry>
-    <entry key='geocoder.url'>http://coragemserver.top/nominatim/reverse</entry>
+    <entry key='geocoder.url'>http://oragaremtim.top/nominatim/reverse</entry>
     <entry key='geocoder.onRequest'>false</entry>
     <entry key='geocoder.ignorePositions'>false</entry>
     <entry key='geocoder.reuseDistance'>10</entry>
     <!-- Time to report Unknown -->
     <entry key='status.timeout'>240</entry>
-
-<!--    <entry key='report.fastThreshold'>10</entry>-->
-
     <entry key='database.registerUnknown'>false</entry>
-    <entry key='web.requestLog.path'>./logs/jetty-yyyy_mm_dd.request.log</entry>
     <entry key='web.sameSiteCookie'>Lax</entry>
     <!-- Persist jetty sessions to database -->
     <entry key='web.persistSession'>false</entry>
+
     <!-- Socket timeout in miliseconds -->
     <entry key='web.timeout'>120000</entry>
 <!--    <entry key='web.timeout'>86400000</entry>-->

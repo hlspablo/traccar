@@ -111,7 +111,9 @@ public class AsyncSocket extends WebSocketAdapter implements ConnectionManager.U
         super.onWebSocketText(message);
 
         try {
-            includeLogs = objectMapper.readTree(message).get("logs").asBoolean();
+            var jsonNode = objectMapper.readTree(message);
+            var logsNode = jsonNode.get("logs");
+            includeLogs = logsNode != null && logsNode.asBoolean();
         } catch (JsonProcessingException e) {
             LOGGER.warn("Socket JSON parsing error", e);
         }
