@@ -1,2 +1,2 @@
-#set($subject = "Test message")
-Test message
+#set($subject = "Mensagem de teste")
+Mensagem de teste

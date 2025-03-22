@@ -1,7 +1,7 @@
-#set($subject = "$device.name: driver has changed")
+#set($subject = "$device.name: motorista foi alterado")
 #if($driver)
 #set($driverName = $driver.name)
 #else
 #set($driverName = $event.getString("driverUniqueId"))
 #end
-Driver $driverName has changed in $device.name at $dateTool.format("YYYY-MM-dd HH:mm:ss", $event.eventTime, $locale, $timezone)
+Motorista $driverName foi alterado em $device.name em $dateTool.format("dd 'de' MMMM HH:mm", $event.eventTime, $locale, $timezone)

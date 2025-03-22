@@ -1,2 +1,2 @@
-#set($subject = "$device.name: maintenance is required")
-$device.name maintenance $maintenance.name is required at $dateTool.format("YYYY-MM-dd HH:mm:ss", $event.eventTime, $locale, $timezone)
+#set($subject = "$device.name: manutenção é necessária")
+$device.name manutenção $maintenance.name é necessária em $dateTool.format("dd 'de' MMMM HH:mm", $event.eventTime, $locale, $timezone)
