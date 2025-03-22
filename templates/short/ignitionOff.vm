@@ -1,2 +1,2 @@
 #set($subject = "$device.name: ignição DESLIGADA")
-$device.name ignição DESLIGADA em $dateTool.format("dd 'de' MMMM HH:mm", $event.eventTime, $locale, $timezone)
+Ignição DESLIGADA em $dateTool.format("dd 'de' MMMM 'às' HH:mm", $event.eventTime, $locale, $timezone)

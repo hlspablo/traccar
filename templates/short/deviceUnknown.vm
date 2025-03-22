@@ -1,2 +1,2 @@
 #set($subject = "$device.name: status é desconhecido")
-$device.name status é desconhecido em $dateTool.format("dd 'de' MMMM HH:mm", $event.eventTime, $locale, $timezone)
+Status é desconhecido em $dateTool.format("dd 'de' MMMM 'às' HH:mm", $event.eventTime, $locale, $timezone)

@@ -4,4 +4,4 @@
 #else
 #set($driverName = $event.getString("driverUniqueId"))
 #end
-Motorista $driverName foi alterado em $device.name em $dateTool.format("dd 'de' MMMM HH:mm", $event.eventTime, $locale, $timezone)
+Motorista $driverName foi alterado em $dateTool.format("dd 'de' MMMM 'às' HH:mm", $event.eventTime, $locale, $timezone)

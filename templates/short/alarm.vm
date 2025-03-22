@@ -77,4 +77,4 @@
 #elseif($alarmName == "removing")
 	#set($alarmName = "Remoção")
 #end
-$device.name alarme: $alarmName em $dateTool.format("dd 'de' MMMM HH:mm", $event.eventTime, $locale, $timezone)
+Alarme: $alarmName em $dateTool.format("dd 'de' MMMM 'às' HH:mm", $event.eventTime, $locale, $timezone)

@@ -1,2 +1,2 @@
 #set($subject = "$device.name: online")
-$device.name online em $dateTool.format("dd 'de' MMMM HH:mm", $event.eventTime, $locale, $timezone)
+Online em $dateTool.format("dd 'de' MMMM 'às' HH:mm", $event.eventTime, $locale, $timezone)

@@ -2,6 +2,6 @@
 <!DOCTYPE html>
 <html>
 <body>
-Sua conta de usuário irá expirar em $dateTool.format("dd 'de' MMMM HH:mm", $expiration, $locale, $timezone).
+Sua conta de usuário irá expirar em $dateTool.format("dd 'de' MMMM 'às' HH:mm", $expiration, $locale, $timezone).
 </body>
 </html>

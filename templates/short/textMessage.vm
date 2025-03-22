@@ -1,2 +1,2 @@
 #set($subject = "$device.name: mensagem de texto recebida")
-Mensagem de texto recebida de $device.name em $dateTool.format("dd 'de' MMMM HH:mm", $event.eventTime, $locale, $timezone)
+Mensagem de texto recebida em $dateTool.format("dd 'de' MMMM 'às' HH:mm", $event.eventTime, $locale, $timezone)
