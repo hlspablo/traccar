@@ -76,7 +76,7 @@ public final class Main {
     }
 
     public static void main(String[] args) throws Exception {
-        Locale.setDefault(new Locale("pt", "BR"));
+        Locale.setDefault(Locale.ENGLISH);
 
         final String configFile;
         if (args.length <= 0) {

@@ -68,7 +68,7 @@ public class TextTemplateFormatter {
         velocityContext.put("webUrl", velocityEngine.getProperty("web.url"));
         velocityContext.put("dateTool", new DateTool());
         velocityContext.put("numberTool", new NumberTool());
-        velocityContext.put("locale", Locale.getDefault());
+        velocityContext.put("locale", new Locale("pt", "BR"));
 
         return velocityContext;
     }
