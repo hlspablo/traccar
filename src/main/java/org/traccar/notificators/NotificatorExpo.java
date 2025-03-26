@@ -88,14 +88,11 @@ public class NotificatorExpo extends Notificator {
                         .setAccessToken(this.accessToken)
                         .build();
 
-                PushNotification.Sound sound = new PushNotification.Sound();
-                sound.setName("horn.wav");
-
                 PushNotification pushNotification = new PushNotification();
                 pushNotification.setTo(registrationTokens);
                 pushNotification.setTitle(message.getSubject());
                 pushNotification.setBody(message.getBody());
-                pushNotification.setSound(sound);
+                pushNotification.setSound("horn.wav");
 
                 List<PushNotification> notifications = new ArrayList<>();
                 notifications.add(pushNotification);
