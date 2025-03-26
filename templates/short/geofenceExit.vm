@@ -1,2 +1,2 @@
-#set($subject = "$device.name: saiu da cerca geográfica")
+#set($subject = "$device.name")
 Saiu da cerca geográfica $geofence.name em $dateTool.format("dd 'de' MMMM 'às' HH:mm", $event.eventTime, $locale, $timezone)

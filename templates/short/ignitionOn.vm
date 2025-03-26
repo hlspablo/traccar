@@ -1,2 +1,2 @@
-#set($subject = "$device.name: ignição LIGADA")
+#set($subject = "$device.name")
 Ignição LIGADA em $dateTool.format("dd 'de' MMMM 'às' HH:mm", $event.eventTime, $locale, $timezone)

@@ -1,4 +1,4 @@
-#set($subject = "$device.name: inativo")
+#set($subject = "$device.name")
 #set($lastUpdate = $dateTool.getDate())
 #set($ignore = $lastUpdate.setTime($event.getLong("lastUpdate")))
 Inativo desde $dateTool.format("dd 'de' MMMM 'às' HH:mm", $lastUpdate, $locale, $timezone)

@@ -1,2 +1,2 @@
-#set($subject = "$device.name: aumento de combustível")
+#set($subject = "$device.name")
 Aumento de combustível em $dateTool.format("dd 'de' MMMM 'às' HH:mm", $event.eventTime, $locale, $timezone)

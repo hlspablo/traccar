@@ -1,4 +1,4 @@
-#set($subject = "$device.name: excedeu a velocidade")
+#set($subject = "$device.name")
 #if($speedUnit == 'kmh')
 #set($speedValue = $position.speed * 1.852)
 #set($speedString = $numberTool.format("0.0 km/h", $speedValue))

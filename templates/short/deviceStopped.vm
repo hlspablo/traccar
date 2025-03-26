@@ -1,2 +1,2 @@
-#set($subject = "$device.name: parou")
+#set($subject = "$device.name")
 Parou em $dateTool.format("dd 'de' MMMM 'às' HH:mm", $event.eventTime, $locale, $timezone)

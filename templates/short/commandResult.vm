@@ -1,2 +1,2 @@
-#set($subject = "$device.name: resultado do comando recebido")
+#set($subject = "$device.name")
 Resultado do comando recebido: $position.getString("result") em $dateTool.format("dd 'de' MMMM 'às' HH:mm", $event.eventTime, $locale, $timezone)
