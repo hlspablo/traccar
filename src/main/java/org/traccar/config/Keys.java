@@ -91,6 +91,20 @@ public final class Keys {
             List.of(KeyType.CONFIG));
 
     /**
+     * Payment API Endpoint.
+     */
+    public static final ConfigKey<String> PAYMENT_API_ENDPOINT = new StringConfigKey(
+            "paymentApiEndpoint",
+            List.of(KeyType.CONFIG));
+
+    /**
+     * Payment Access Token.
+     */
+    public static final ConfigKey<String> PAYMENT_ACCESS_TOKEN = new StringConfigKey(
+            "paymentAccessToken",
+            List.of(KeyType.CONFIG));
+
+    /**
      * Default protocol mask to use. Currently used only by Skypatrol protocol.
      */
     public static final ConfigSuffix<Integer> PROTOCOL_MASK = new IntegerConfigSuffix(

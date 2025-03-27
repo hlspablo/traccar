@@ -49,7 +49,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.HttpHeaders;
 import java.util.Map;
 import jakarta.ws.rs.core.GenericType;
 
@@ -214,8 +213,8 @@ public class UserResource extends BaseObjectResource<User> {
             requestData.put("cpfCnpj", cpfCnpj);
             
             // Make API request to payment provider
-            String apiEndpoint = "https://api-sandbox.asaas.com/v3/customers";
-            String accessToken = "$aact_hmlg_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmFjZTU1MTFjLWU1OTItNGZiYy05MGYwLTlhNGM2ZGU2ZDNhMDo6JGFhY2hfZTQyODE5MjEtNjljZi00YTAwLWIxNjgtZGQxNzk1ZTU1Nzky";
+            String apiEndpoint = config.getString(Keys.PAYMENT_API_ENDPOINT) + "/v3/customers";
+            String accessToken = config.getString(Keys.PAYMENT_ACCESS_TOKEN);
             
             // Send POST request
             jakarta.ws.rs.core.Response response = client.target(apiEndpoint)
