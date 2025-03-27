@@ -25,6 +25,7 @@ import org.traccar.config.Config;
 import org.traccar.config.Keys;
 import org.traccar.helper.LogAction;
 import org.traccar.helper.model.UserUtil;
+import org.traccar.helper.model.DeviceUtil;
 import org.traccar.model.Device;
 import org.traccar.model.ManagedUser;
 import org.traccar.model.Permission;
@@ -53,6 +54,7 @@ import java.util.Map;
 import jakarta.ws.rs.core.GenericType;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 
 @Path("users")
 @Produces(MediaType.APPLICATION_JSON)
@@ -287,11 +289,14 @@ public class UserResource extends BaseObjectResource<User> {
             LocalDate tomorrow = LocalDate.now().plusDays(1);
             String nextDueDate = tomorrow.format(DateTimeFormatter.ISO_DATE);
             
+            // Calculate billing value from user's devices
+            double billingValue = calculateTotalBillingValue(user);
+            
             // Prepare request data
             Map<String, Object> requestData = new HashMap<>();
             requestData.put("customer", customerId);
             requestData.put("billingType", "UNDEFINED");
-            requestData.put("value", 20.0);
+            requestData.put("value", billingValue);
             requestData.put("cycle", cycle);
             requestData.put("nextDueDate", nextDueDate);
             requestData.put("description", "Para ver os detalhes da cobrança, acesse: https://coragemrastro.top/billing");
@@ -337,6 +342,41 @@ public class UserResource extends BaseObjectResource<User> {
         } catch (Exception e) {
             throw new RuntimeException("Failed to create payment provider subscription: " + e.getMessage(), e);
         }
+    }
+
+    private double calculateTotalBillingValue(User user) throws StorageException {
+        double total = 0.0;
+        
+        // Get all devices for this user using the approach from DeviceResource
+        var conditions = new LinkedList<Condition>();
+        conditions.add(new Condition.Permission(User.class, user.getId(), Device.class).excludeGroups());
+        Collection<Device> devices = storage.getObjects(Device.class, new Request(new Columns.All(), Condition.merge(conditions)));
+        
+        // Sum up plan values from all devices
+        for (Device device : devices) {
+            if (device.getAttributes() != null && device.getAttributes().containsKey("planValue")) {
+                try {
+                    Object value = device.getAttributes().get("planValue");
+                    if (value instanceof Number) {
+                        total += ((Number) value).doubleValue();
+                    } else if (value instanceof String) {
+                        total += Double.parseDouble((String) value);
+                    }
+                } catch (NumberFormatException e) {
+                    // Skip invalid values
+                }
+            }
+        }
+        
+        // If no devices have planValue, set a minimum value
+        if (total <= 0) {
+            total = 35.0;
+        }
+        
+        // Format to one decimal place
+        total = Math.round(total * 10) / 10.0;
+        
+        return total;
     }
 
     @Path("totp")
