@@ -354,6 +354,7 @@ public class UserResource extends BaseObjectResource<User> {
             requestData.put("cycle", cycle);
             requestData.put("nextDueDate", nextDueDate);
             requestData.put("description", config.getString(Keys.PAYMENT_DESCRIPTION));
+            requestData.put("externalReference", user.getId());
             
             Map<String, Object> callback = new HashMap<>();
             callback.put("successUrl", config.getString(Keys.PAYMENT_SUCCESS_URL));
@@ -436,6 +437,114 @@ public class UserResource extends BaseObjectResource<User> {
             throw new SecurityException("One-time password is disabled");
         }
         return new GoogleAuthenticator().createCredentials().getKey();
+    }
+
+    @Path("subscription")
+    @PermitAll
+    @POST
+    public Response handleWebhook(Map<String, Object> data) throws StorageException {
+        try {
+            // Validate payload
+            if (data == null) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Empty payload").build();
+            }
+
+            // Check if event is related to a subscription
+            if (!data.containsKey("subscription")) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Missing subscription data").build();
+            }
+
+            Object subscriptionObj = data.get("subscription");
+            if (!(subscriptionObj instanceof Map)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid subscription format").build();
+            }
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> subscription = (Map<String, Object>) subscriptionObj;
+            
+            // Validate subscription object
+            if (subscription == null || !subscription.containsKey("object") || 
+                !subscription.get("object").equals("subscription")) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid subscription data").build();
+            }
+
+            // Extract required fields
+            if (!subscription.containsKey("id") || !subscription.containsKey("status")) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Missing subscription id or status").build();
+            }
+
+            String subscriptionId = subscription.get("id").toString();
+            String status = subscription.get("status").toString();
+            
+            // Get user ID from externalReference if available
+            Long userId = null;
+            if (subscription.containsKey("externalReference") && subscription.get("externalReference") != null) {
+                try {
+                    userId = Long.parseLong(subscription.get("externalReference").toString());
+                } catch (NumberFormatException e) {
+                    // Invalid user ID format, will fall back to searching all devices
+                }
+            }
+
+            // Find all devices with this subscription ID
+            List<Device> devices = getDevicesBySubscriptionId(subscriptionId, userId);
+
+            if (devices.isEmpty()) {
+                return Response.status(Response.Status.OK)
+                    .entity("No devices found for subscription: " + subscriptionId).build();
+            }
+
+            // Update device status based on subscription status
+            boolean disable = status.equals("INACTIVE");
+            updateDevicesStatus(devices, disable);
+
+            return Response.status(Response.Status.OK)
+                .entity("Processed " + devices.size() + " devices for subscription " + subscriptionId).build();
+                
+        } catch (ClassCastException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity("Invalid payload format: " + e.getMessage()).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity("Error processing webhook: " + e.getMessage()).build();
+        }
+    }
+
+    private List<Device> getDevicesBySubscriptionId(String subscriptionId, Long userId) throws StorageException {
+        List<Device> result = new LinkedList<>();
+        
+        // Get devices - either all or just for a specific user
+        Collection<Device> devices;
+        if (userId != null) {
+            // Only query devices belonging to this user
+            devices = storage.getObjects(Device.class, new Request(
+                    new Columns.All(),
+                    new Condition.Permission(User.class, userId, Device.class)));
+        } else {
+            // Fall back to querying all devices if no user ID provided
+            devices = storage.getObjects(Device.class, new Request(new Columns.All()));
+        }
+        
+        // Filter devices with matching subscription ID
+        for (Device device : devices) {
+            if (device.getAttributes() != null && 
+                device.getAttributes().containsKey("subscriptionId") && 
+                subscriptionId.equals(device.getAttributes().get("subscriptionId").toString())) {
+                result.add(device);
+            }
+        }
+        
+        return result;
+    }
+
+    private void updateDevicesStatus(List<Device> devices, boolean disable) throws StorageException {
+        for (Device device : devices) {
+            device.setDisabled(disable);
+            storage.updateObject(device, new Request(
+                    new Columns.Include("disabled"),
+                    new Condition.Equals("id", device.getId())));
+        }
     }
 
 }
