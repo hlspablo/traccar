@@ -53,6 +53,7 @@ import java.util.Map;
 import jakarta.ws.rs.core.GenericType;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Path("users")
 @Produces(MediaType.APPLICATION_JSON)
@@ -158,10 +159,10 @@ public class UserResource extends BaseObjectResource<User> {
     public Response enableBilling(@PathParam("id") long id, Map<String, Object> data) throws StorageException {
         try {
             // Check if current user is an administrator
-        User currentUser = getUserId() > 0 ? permissionsService.getUser(getUserId()) : null;
-        if (currentUser == null || !currentUser.getAdministrator()) {
-            throw new SecurityException("Only administrators can enable billing");
-        }
+            User currentUser = getUserId() > 0 ? permissionsService.getUser(getUserId()) : null;
+            if (currentUser == null || !currentUser.getAdministrator()) {
+                throw new SecurityException("Only administrators can enable billing");
+            }
 
             // Get the target user
             User user = storage.getObject(User.class, new Request(
@@ -183,11 +184,51 @@ public class UserResource extends BaseObjectResource<User> {
                 }
             }
             
-            // Create the payment provider customer
-            String paymentUserId = createPaymentProviderCustomer(user);
+            // Extract device IDs from request data
+            List<Long> deviceIds = new LinkedList<>();
+            if (data != null && data.containsKey("deviceIds")) {
+                if (data.get("deviceIds") instanceof List) {
+                    ((List<?>) data.get("deviceIds")).forEach(deviceId -> {
+                        if (deviceId instanceof Number) {
+                            deviceIds.add(((Number) deviceId).longValue());
+                        } else if (deviceId instanceof String) {
+                            try {
+                                deviceIds.add(Long.parseLong((String) deviceId));
+                            } catch (NumberFormatException e) {
+                                // Skip invalid IDs
+                            }
+                        }
+                    });
+                }
+            }
             
-            // Create subscription
-            String subscriptionId = createPaymentProviderSubscription(user, paymentUserId, cycle);
+            if (deviceIds.isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("At least one device ID must be provided")
+                        .build();
+            }
+            
+            // Verify the devices belong to the user
+            List<Device> devices = new LinkedList<>();
+            for (Long deviceId : deviceIds) {
+                devices.addAll(storage.getObjects(Device.class, new Request(
+                        new Columns.All(),
+                        new Condition.And(
+                                new Condition.Equals("id", deviceId),
+                                new Condition.Permission(User.class, user.getId(), Device.class)))));
+            }
+            
+            if (devices.isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("No valid devices found for the user")
+                        .build();
+            }
+            
+            // Create the payment provider customer with device observations
+            String paymentUserId = createPaymentProviderCustomer(user, deviceIds);
+            
+            // Create subscription based on these devices
+            String subscriptionId = createPaymentProviderSubscription(user, paymentUserId, cycle, devices);
             
             // Update the user's attributes
             if (user.getAttributes() == null) {
@@ -195,13 +236,23 @@ public class UserResource extends BaseObjectResource<User> {
             }
             user.getAttributes().put("billingEnabled", true);
             user.getAttributes().put("paymentUserId", paymentUserId);
-            user.getAttributes().put("subscriptionId", subscriptionId);
             user.getAttributes().put("billingCycle", cycle);
             
             // Save the updated user
             storage.updateObject(user, new Request(
                     new Columns.Include("attributes"),
                     new Condition.Equals("id", id)));
+            
+            // Update each device with the subscription ID
+            for (Device device : devices) {
+                if (device.getAttributes() == null) {
+                    device.setAttributes(new HashMap<>());
+                }
+                device.getAttributes().put("subscriptionId", subscriptionId);
+                storage.updateObject(device, new Request(
+                        new Columns.Include("attributes"),
+                        new Condition.Equals("id", device.getId())));
+            }
             
             LogAction.edit(getUserId(), user);
             
@@ -228,13 +279,18 @@ public class UserResource extends BaseObjectResource<User> {
                 cycle.equals("YEARLY"));
     }
 
-    private String createPaymentProviderCustomer(User user) {
+    private String createPaymentProviderCustomer(User user, List<Long> deviceIds) {
         try {
             // Prepare request data
             Map<String, Object> requestData = new HashMap<>();
             requestData.put("name", user.getName());
             requestData.put("email", user.getEmail());
             requestData.put("externalReference", user.getId());
+            
+            // Add device IDs as observations
+            if (!deviceIds.isEmpty()) {
+                requestData.put("observations", "Device IDs: " + deviceIds.toString());
+            }
             
             // Get CPF/CNPJ from user attributes or use default
             String cpfCnpj = "61109652356"; // Default value
@@ -281,14 +337,14 @@ public class UserResource extends BaseObjectResource<User> {
         }
     }
 
-    private String createPaymentProviderSubscription(User user, String customerId, String cycle) {
+    private String createPaymentProviderSubscription(User user, String customerId, String cycle, List<Device> devices) {
         try {
             // Calculate tomorrow's date
             LocalDate tomorrow = LocalDate.now().plusDays(1);
             String nextDueDate = tomorrow.format(DateTimeFormatter.ISO_DATE);
             
-            // Calculate billing value from user's devices
-            double billingValue = calculateTotalBillingValue(user);
+            // Calculate billing value from provided devices
+            double billingValue = calculateTotalBillingValue(devices);
             
             // Prepare request data
             Map<String, Object> requestData = new HashMap<>();
@@ -341,16 +397,11 @@ public class UserResource extends BaseObjectResource<User> {
             throw new RuntimeException("Failed to create payment provider subscription: " + e.getMessage(), e);
         }
     }
-
-    private double calculateTotalBillingValue(User user) throws StorageException {
+    
+    private double calculateTotalBillingValue(List<Device> devices) {
         double total = 0.0;
         
-        // Get all devices for this user using the approach from DeviceResource
-        var conditions = new LinkedList<Condition>();
-        conditions.add(new Condition.Permission(User.class, user.getId(), Device.class).excludeGroups());
-        Collection<Device> devices = storage.getObjects(Device.class, new Request(new Columns.All(), Condition.merge(conditions)));
-        
-        // Sum up plan values from all devices
+        // Sum up plan values from devices
         for (Device device : devices) {
             if (device.getAttributes() != null && device.getAttributes().containsKey("planValue")) {
                 try {
