@@ -51,6 +51,8 @@ import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
 import java.util.Map;
 import jakarta.ws.rs.core.GenericType;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @Path("users")
 @Produces(MediaType.APPLICATION_JSON)
@@ -172,12 +174,16 @@ public class UserResource extends BaseObjectResource<User> {
             // Create the payment provider customer
             String paymentUserId = createPaymentProviderCustomer(user);
             
+            // Create subscription
+            String subscriptionId = createPaymentProviderSubscription(user, paymentUserId);
+            
             // Update the user's attributes
             if (user.getAttributes() == null) {
                 user.setAttributes(new HashMap<>());
             }
             user.getAttributes().put("billingEnabled", true);
             user.getAttributes().put("paymentUserId", paymentUserId);
+            user.getAttributes().put("subscriptionId", subscriptionId);
             
             // Save the updated user
             storage.updateObject(user, new Request(
@@ -248,6 +254,64 @@ public class UserResource extends BaseObjectResource<User> {
             return responseData.get("id").toString();
         } catch (Exception e) {
             throw new RuntimeException("Failed to create payment provider customer: " + e.getMessage(), e);
+        }
+    }
+
+    private String createPaymentProviderSubscription(User user, String customerId) {
+        try {
+            // Calculate tomorrow's date
+            LocalDate tomorrow = LocalDate.now().plusDays(1);
+            String nextDueDate = tomorrow.format(DateTimeFormatter.ISO_DATE);
+            
+            // Prepare request data
+            Map<String, Object> requestData = new HashMap<>();
+            requestData.put("customer", customerId);
+            requestData.put("billingType", "UNDEFINED");
+            requestData.put("value", 20.0);
+            requestData.put("cycle", "MONTHLY");
+            requestData.put("nextDueDate", nextDueDate);
+            requestData.put("description", "Para ver os detalhes da cobrança, acesse: https://coragemrastro.top/billing");
+            
+            Map<String, Object> callback = new HashMap<>();
+            callback.put("successUrl", "https://coragemrastro.top/success");
+            callback.put("autoRedirect", true);
+            requestData.put("callback", callback);
+            
+            // Make API request to payment provider
+            String apiEndpoint = config.getString(Keys.PAYMENT_API_ENDPOINT) + "/v3/subscriptions";
+            String accessToken = config.getString(Keys.PAYMENT_ACCESS_TOKEN);
+            
+            // Send POST request
+            jakarta.ws.rs.core.Response response = client.target(apiEndpoint)
+                    .request(MediaType.APPLICATION_JSON)
+                    .header("access_token", accessToken)
+                    .post(Entity.json(requestData));
+            
+            // Check response status
+            int status = response.getStatus();
+            if (status != 200 && status != 201) {
+                String errorBody;
+                try {
+                    // Try to get response as string
+                    errorBody = response.readEntity(String.class);
+                } catch (Exception e) {
+                    errorBody = "Unable to read error response";
+                }
+                
+                throw new RuntimeException(String.format(
+                    "Payment provider subscription error: Status=%d, Response=%s", 
+                    status, 
+                    errorBody.isEmpty() ? "[empty response]" : errorBody));
+            }
+            
+            // Get subscription ID from response
+            Map<String, Object> responseData = response.readEntity(new GenericType<Map<String, Object>>() {});
+            if (responseData == null || !responseData.containsKey("id")) {
+                throw new RuntimeException("Invalid response from payment provider: missing subscription ID");
+            }
+            return responseData.get("id").toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create payment provider subscription: " + e.getMessage(), e);
         }
     }
 
