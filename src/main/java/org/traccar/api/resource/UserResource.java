@@ -204,6 +204,7 @@ public class UserResource extends BaseObjectResource<User> {
             Map<String, Object> requestData = new HashMap<>();
             requestData.put("name", user.getName());
             requestData.put("email", user.getEmail());
+            requestData.put("externalReference", user.getId());
             
             // Get CPF/CNPJ from user attributes or use default
             String cpfCnpj = "61109652356"; // Default value
