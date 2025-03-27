@@ -155,13 +155,13 @@ public class UserResource extends BaseObjectResource<User> {
 
     @Path("{id}/enableBilling")
     @POST
-    public Response enableBilling(@PathParam("id") long id) throws StorageException {
+    public Response enableBilling(@PathParam("id") long id, Map<String, Object> data) throws StorageException {
         try {
             // Check if current user is an administrator
-            User currentUser = getUserId() > 0 ? permissionsService.getUser(getUserId()) : null;
-            if (currentUser == null || !currentUser.getAdministrator()) {
-                throw new SecurityException("Only administrators can enable billing");
-            }
+        User currentUser = getUserId() > 0 ? permissionsService.getUser(getUserId()) : null;
+        if (currentUser == null || !currentUser.getAdministrator()) {
+            throw new SecurityException("Only administrators can enable billing");
+        }
 
             // Get the target user
             User user = storage.getObject(User.class, new Request(
@@ -171,11 +171,23 @@ public class UserResource extends BaseObjectResource<User> {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
             
+            // Extract cycle from request data, default to MONTHLY
+            String cycle = "MONTHLY";
+            if (data != null && data.containsKey("cycle")) {
+                cycle = data.get("cycle").toString();
+                // Validate cycle value
+                if (!isValidCycle(cycle)) {
+                    return Response.status(Response.Status.BAD_REQUEST)
+                            .entity("Invalid billing cycle. Valid values are: WEEKLY, BIWEEKLY, MONTHLY, BIMONTHLY, QUARTERLY, SEMIANNUALLY, YEARLY")
+                            .build();
+                }
+            }
+            
             // Create the payment provider customer
             String paymentUserId = createPaymentProviderCustomer(user);
             
             // Create subscription
-            String subscriptionId = createPaymentProviderSubscription(user, paymentUserId);
+            String subscriptionId = createPaymentProviderSubscription(user, paymentUserId, cycle);
             
             // Update the user's attributes
             if (user.getAttributes() == null) {
@@ -184,6 +196,7 @@ public class UserResource extends BaseObjectResource<User> {
             user.getAttributes().put("billingEnabled", true);
             user.getAttributes().put("paymentUserId", paymentUserId);
             user.getAttributes().put("subscriptionId", subscriptionId);
+            user.getAttributes().put("billingCycle", cycle);
             
             // Save the updated user
             storage.updateObject(user, new Request(
@@ -202,6 +215,17 @@ public class UserResource extends BaseObjectResource<User> {
                     .entity("Error enabling billing: " + e.getMessage())
                     .build();
         }
+    }
+
+    private boolean isValidCycle(String cycle) {
+        return cycle != null && (
+                cycle.equals("WEEKLY") ||
+                cycle.equals("BIWEEKLY") ||
+                cycle.equals("MONTHLY") ||
+                cycle.equals("BIMONTHLY") ||
+                cycle.equals("QUARTERLY") ||
+                cycle.equals("SEMIANNUALLY") ||
+                cycle.equals("YEARLY"));
     }
 
     private String createPaymentProviderCustomer(User user) {
@@ -257,7 +281,7 @@ public class UserResource extends BaseObjectResource<User> {
         }
     }
 
-    private String createPaymentProviderSubscription(User user, String customerId) {
+    private String createPaymentProviderSubscription(User user, String customerId, String cycle) {
         try {
             // Calculate tomorrow's date
             LocalDate tomorrow = LocalDate.now().plusDays(1);
@@ -268,7 +292,7 @@ public class UserResource extends BaseObjectResource<User> {
             requestData.put("customer", customerId);
             requestData.put("billingType", "UNDEFINED");
             requestData.put("value", 20.0);
-            requestData.put("cycle", "MONTHLY");
+            requestData.put("cycle", cycle);
             requestData.put("nextDueDate", nextDueDate);
             requestData.put("description", "Para ver os detalhes da cobrança, acesse: https://coragemrastro.top/billing");
             
