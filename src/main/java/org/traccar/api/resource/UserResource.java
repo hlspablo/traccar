@@ -25,7 +25,6 @@ import org.traccar.config.Config;
 import org.traccar.config.Keys;
 import org.traccar.helper.LogAction;
 import org.traccar.helper.model.UserUtil;
-import org.traccar.helper.model.DeviceUtil;
 import org.traccar.model.Device;
 import org.traccar.model.ManagedUser;
 import org.traccar.model.Permission;
@@ -54,7 +53,6 @@ import java.util.Map;
 import jakarta.ws.rs.core.GenericType;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 
 @Path("users")
 @Produces(MediaType.APPLICATION_JSON)
@@ -299,10 +297,10 @@ public class UserResource extends BaseObjectResource<User> {
             requestData.put("value", billingValue);
             requestData.put("cycle", cycle);
             requestData.put("nextDueDate", nextDueDate);
-            requestData.put("description", "Para ver os detalhes da cobrança, acesse: https://coragemrastro.top/billing");
+            requestData.put("description", config.getString(Keys.PAYMENT_DESCRIPTION));
             
             Map<String, Object> callback = new HashMap<>();
-            callback.put("successUrl", "https://coragemrastro.top/success");
+            callback.put("successUrl", config.getString(Keys.PAYMENT_SUCCESS_URL));
             callback.put("autoRedirect", true);
             requestData.put("callback", callback);
             

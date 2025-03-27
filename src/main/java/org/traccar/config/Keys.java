@@ -105,6 +105,20 @@ public final class Keys {
             List.of(KeyType.CONFIG));
 
     /**
+     * Payment Description Text.
+     */
+    public static final ConfigKey<String> PAYMENT_DESCRIPTION = new StringConfigKey(
+            "paymentDescription",
+            List.of(KeyType.CONFIG));
+
+    /**
+     * Payment Success URL.
+     */
+    public static final ConfigKey<String> PAYMENT_SUCCESS_URL = new StringConfigKey(
+            "paymentSuccessUrl",
+            List.of(KeyType.CONFIG));
+
+    /**
      * Default protocol mask to use. Currently used only by Skypatrol protocol.
      */
     public static final ConfigSuffix<Integer> PROTOCOL_MASK = new IntegerConfigSuffix(
