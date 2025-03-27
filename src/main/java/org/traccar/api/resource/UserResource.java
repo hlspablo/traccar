@@ -28,6 +28,7 @@ import org.traccar.helper.model.UserUtil;
 import org.traccar.model.Device;
 import org.traccar.model.ManagedUser;
 import org.traccar.model.Permission;
+import org.traccar.model.Server;
 import org.traccar.model.User;
 import org.traccar.storage.StorageException;
 import org.traccar.storage.query.Columns;
@@ -184,6 +185,9 @@ public class UserResource extends BaseObjectResource<User> {
                 }
             }
             
+            // Get discount percentage based on cycle from server attributes
+            double discountPercentage = getDiscountForCycle(cycle, permissionsService.getServer());
+            
             // Extract device IDs from request data
             List<Long> deviceIds = new LinkedList<>();
             if (data != null && data.containsKey("deviceIds")) {
@@ -228,7 +232,7 @@ public class UserResource extends BaseObjectResource<User> {
             String paymentUserId = createPaymentProviderCustomer(user, deviceIds);
             
             // Create subscription based on these devices
-            String subscriptionId = createPaymentProviderSubscription(user, paymentUserId, cycle, devices);
+            String subscriptionId = createPaymentProviderSubscription(user, paymentUserId, cycle, devices, discountPercentage);
             
             // Update the user's attributes
             if (user.getAttributes() == null) {
@@ -277,6 +281,56 @@ public class UserResource extends BaseObjectResource<User> {
                 cycle.equals("QUARTERLY") ||
                 cycle.equals("SEMIANNUALLY") ||
                 cycle.equals("YEARLY"));
+    }
+
+    private double getDiscountForCycle(String cycle, Server server) {
+        double discountPercentage = 0;
+        
+        if (server.getAttributes() != null) {
+            switch (cycle) {
+                case "BIMONTHLY":
+                    if (server.getAttributes().containsKey("BIMONTHLY_DISCOUNT")) {
+                        try {
+                            discountPercentage = Double.parseDouble(server.getAttributes().get("BIMONTHLY_DISCOUNT").toString());
+                        } catch (NumberFormatException e) {
+                            // Use default of 0% if attribute value is invalid
+                        }
+                    }
+                    break;
+                case "QUARTERLY":
+                    if (server.getAttributes().containsKey("QUARTERLY_DISCOUNT")) {
+                        try {
+                            discountPercentage = Double.parseDouble(server.getAttributes().get("QUARTERLY_DISCOUNT").toString());
+                        } catch (NumberFormatException e) {
+                            // Use default of 0% if attribute value is invalid
+                        }
+                    }
+                    break;
+                case "SEMIANNUALLY":
+                    if (server.getAttributes().containsKey("SEMIANNUALLY_DISCOUNT")) {
+                        try {
+                            discountPercentage = Double.parseDouble(server.getAttributes().get("SEMIANNUALLY_DISCOUNT").toString());
+                        } catch (NumberFormatException e) {
+                            // Use default of 0% if attribute value is invalid
+                        }
+                    }
+                    break;
+                case "YEARLY":
+                    if (server.getAttributes().containsKey("YEARLY")) {
+                        try {
+                            discountPercentage = Double.parseDouble(server.getAttributes().get("YEARLY").toString());
+                        } catch (NumberFormatException e) {
+                            // Use default of 0% if attribute value is invalid
+                        }
+                    }
+                    break;
+                default:
+                    // No discount for other cycles
+                    break;
+            }
+        }
+        
+        return discountPercentage;
     }
 
     private String createPaymentProviderCustomer(User user, List<Long> deviceIds) {
@@ -337,7 +391,7 @@ public class UserResource extends BaseObjectResource<User> {
         }
     }
 
-    private String createPaymentProviderSubscription(User user, String customerId, String cycle, List<Device> devices) {
+    private String createPaymentProviderSubscription(User user, String customerId, String cycle, List<Device> devices, double discountPercentage) {
         try {
             // Calculate tomorrow's date
             LocalDate tomorrow = LocalDate.now().plusDays(1);
@@ -345,6 +399,13 @@ public class UserResource extends BaseObjectResource<User> {
             
             // Calculate billing value from provided devices
             double billingValue = calculateTotalBillingValue(devices);
+            
+            // Apply discount if applicable
+            if (discountPercentage > 0) {
+                billingValue = billingValue * (1 - discountPercentage / 100);
+                // Round to one decimal place
+                billingValue = Math.round(billingValue * 10) / 10.0;
+            }
             
             // Prepare request data
             Map<String, Object> requestData = new HashMap<>();
@@ -355,6 +416,14 @@ public class UserResource extends BaseObjectResource<User> {
             requestData.put("nextDueDate", nextDueDate);
             requestData.put("description", config.getString(Keys.PAYMENT_DESCRIPTION));
             requestData.put("externalReference", user.getId());
+            
+            // Add discount if applicable
+            if (discountPercentage > 0) {
+                Map<String, Object> discount = new HashMap<>();
+                discount.put("value", discountPercentage);
+                discount.put("type", "PERCENTAGE");
+                requestData.put("discount", discount);
+            }
             
             Map<String, Object> callback = new HashMap<>();
             callback.put("successUrl", config.getString(Keys.PAYMENT_SUCCESS_URL));
