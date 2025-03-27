@@ -25,13 +25,10 @@ import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class TokenManager {
-
-    private static final int DEFAULT_EXPIRATION_DAYS = 7;
-
+    
     private final ObjectMapper objectMapper;
     private final CryptoManager cryptoManager;
 

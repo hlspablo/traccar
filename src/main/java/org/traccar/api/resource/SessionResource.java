@@ -49,7 +49,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.Date;
 import java.net.URI;
 
 @Path("session")

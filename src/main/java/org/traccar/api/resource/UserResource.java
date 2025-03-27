@@ -45,6 +45,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 
 @Path("users")
@@ -141,6 +142,49 @@ public class UserResource extends BaseObjectResource<User> {
             request.getSession().removeAttribute(SessionResource.USER_ID_KEY);
         }
         return response;
+    }
+
+    @Path("{id}/enableBilling")
+    @POST
+    public Response enableBilling(@PathParam("id") long id) throws StorageException {
+        try {
+            // Check if current user is an administrator
+            User currentUser = getUserId() > 0 ? permissionsService.getUser(getUserId()) : null;
+            if (currentUser == null || !currentUser.getAdministrator()) {
+                throw new SecurityException("Only administrators can enable billing");
+            }
+
+            // Get the target user
+            User user = storage.getObject(User.class, new Request(
+                    new Columns.All(), new Condition.Equals("id", id)));
+            
+            if (user == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            
+            // Update the billing attribute in the user's attributes
+            if (user.getAttributes() == null) {
+                user.setAttributes(new HashMap<>());
+            }
+            user.getAttributes().put("billingEnabled", true);
+            
+            // Save the updated user
+            storage.updateObject(user, new Request(
+                    new Columns.Include("attributes"),
+                    new Condition.Equals("id", id)));
+            
+            LogAction.edit(getUserId(), user);
+            
+            return Response.ok(user).build();
+        } catch (SecurityException e) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(e.getMessage())
+                    .build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error enabling billing: " + e.getMessage())
+                    .build();
+        }
     }
 
     @Path("totp")
