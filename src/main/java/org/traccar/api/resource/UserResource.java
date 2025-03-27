@@ -47,6 +47,11 @@ import jakarta.ws.rs.core.Response;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.HttpHeaders;
+import java.util.Map;
+import jakarta.ws.rs.core.GenericType;
 
 @Path("users")
 @Produces(MediaType.APPLICATION_JSON)
@@ -58,6 +63,9 @@ public class UserResource extends BaseObjectResource<User> {
 
     @Context
     private HttpServletRequest request;
+
+    @Inject
+    private Client client;
 
     public UserResource() {
         super(User.class);
@@ -162,11 +170,15 @@ public class UserResource extends BaseObjectResource<User> {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
             
-            // Update the billing attribute in the user's attributes
+            // Create the payment provider customer
+            String paymentUserId = createPaymentProviderCustomer(user);
+            
+            // Update the user's attributes
             if (user.getAttributes() == null) {
                 user.setAttributes(new HashMap<>());
             }
             user.getAttributes().put("billingEnabled", true);
+            user.getAttributes().put("paymentUserId", paymentUserId);
             
             // Save the updated user
             storage.updateObject(user, new Request(
@@ -184,6 +196,58 @@ public class UserResource extends BaseObjectResource<User> {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Error enabling billing: " + e.getMessage())
                     .build();
+        }
+    }
+
+    private String createPaymentProviderCustomer(User user) {
+        try {
+            // Prepare request data
+            Map<String, Object> requestData = new HashMap<>();
+            requestData.put("name", user.getName());
+            requestData.put("email", user.getEmail());
+            
+            // Get CPF/CNPJ from user attributes or use default
+            String cpfCnpj = "61109652356"; // Default value
+            if (user.getAttributes() != null && user.getAttributes().containsKey("cpfCnpj")) {
+                cpfCnpj = user.getAttributes().get("cpfCnpj").toString();
+            }
+            requestData.put("cpfCnpj", cpfCnpj);
+            
+            // Make API request to payment provider
+            String apiEndpoint = "https://api-sandbox.asaas.com/v3/customers";
+            String accessToken = "$aact_hmlg_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmFjZTU1MTFjLWU1OTItNGZiYy05MGYwLTlhNGM2ZGU2ZDNhMDo6JGFhY2hfZTQyODE5MjEtNjljZi00YTAwLWIxNjgtZGQxNzk1ZTU1Nzky";
+            
+            // Send POST request
+            jakarta.ws.rs.core.Response response = client.target(apiEndpoint)
+                    .request(MediaType.APPLICATION_JSON)
+                    .header("access_token", accessToken)
+                    .post(Entity.json(requestData));
+            
+            // Check response status
+            int status = response.getStatus();
+            if (status != 200 && status != 201) {
+                String errorBody;
+                try {
+                    // Try to get response as string
+                    errorBody = response.readEntity(String.class);
+                } catch (Exception e) {
+                    errorBody = "Unable to read error response";
+                }
+                
+                throw new RuntimeException(String.format(
+                    "Payment provider API error: Status=%d, Response=%s", 
+                    status, 
+                    errorBody.isEmpty() ? "[empty response]" : errorBody));
+            }
+            
+            // Get customer ID from response
+            Map<String, Object> responseData = response.readEntity(new GenericType<Map<String, Object>>() {});
+            if (responseData == null || !responseData.containsKey("id")) {
+                throw new RuntimeException("Invalid response from payment provider: missing customer ID");
+            }
+            return responseData.get("id").toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create payment provider customer: " + e.getMessage(), e);
         }
     }
 
