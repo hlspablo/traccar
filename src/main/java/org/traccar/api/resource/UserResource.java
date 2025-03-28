@@ -340,6 +340,7 @@ public class UserResource extends BaseObjectResource<User> {
             Map<String, Object> requestData = new HashMap<>();
             requestData.put("name", user.getName());
             requestData.put("email", user.getEmail());
+            requestData.put("mobilePhone", user.getPhone());
             requestData.put("externalReference", user.getId());
             
             // Add device IDs as observations
