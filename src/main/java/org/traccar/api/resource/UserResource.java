@@ -55,6 +55,7 @@ import jakarta.ws.rs.core.GenericType;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import jakarta.ws.rs.HeaderParam;
 
 @Path("users")
 @Produces(MediaType.APPLICATION_JSON)
@@ -511,8 +512,16 @@ public class UserResource extends BaseObjectResource<User> {
     @Path("subscription")
     @PermitAll
     @POST
-    public Response handleWebhook(Map<String, Object> data) throws StorageException {
+    public Response handleWebhook(Map<String, Object> data, @HeaderParam("asaas-access-token") String accessToken) throws StorageException {
         try {
+            // Validate access token
+            String configuredToken = config.getString(Keys.ASAAS_ACCESS_TOKEN);
+            if (configuredToken != null && !configuredToken.isEmpty() && !configuredToken.equals(accessToken)) {
+                return Response.status(Response.Status.UNAUTHORIZED)
+                        .entity("Invalid access token")
+                        .build();
+            }
+            
             // Validate payload
             if (data == null) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("Empty payload").build();

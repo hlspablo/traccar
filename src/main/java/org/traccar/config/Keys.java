@@ -119,6 +119,13 @@ public final class Keys {
             List.of(KeyType.CONFIG));
 
     /**
+     * ASAAS Access Token.
+     */
+    public static final ConfigKey<String> ASAAS_ACCESS_TOKEN = new StringConfigKey(
+            "asaasAccessToken",
+            List.of(KeyType.CONFIG));
+
+    /**
      * Default protocol mask to use. Currently used only by Skypatrol protocol.
      */
     public static final ConfigSuffix<Integer> PROTOCOL_MASK = new IntegerConfigSuffix(
