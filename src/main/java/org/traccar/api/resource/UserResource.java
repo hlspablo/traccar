@@ -242,6 +242,7 @@ public class UserResource extends BaseObjectResource<User> {
             user.getAttributes().put("billingEnabled", true);
             user.getAttributes().put("paymentUserId", paymentUserId);
             user.getAttributes().put("billingCycle", cycle);
+            user.getAttributes().put("subscription_" + subscriptionId, subscriptionId);
             
             // Save the updated user
             storage.updateObject(user, new Request(
