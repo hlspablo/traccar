@@ -401,6 +401,29 @@ public class UserResource extends BaseObjectResource<User> {
             // Calculate billing value from provided devices
             double billingValue = calculateTotalBillingValue(devices);
             
+            // Adjust billing value based on cycle
+            switch (cycle) {
+                case "WEEKLY":
+                    billingValue = billingValue / 4; // Approximately 1/4 of a month
+                    break;
+                case "BIWEEKLY":
+                    billingValue = billingValue / 2; // Approximately 1/2 of a month
+                    break;
+                case "BIMONTHLY":
+                    billingValue = billingValue * 2; // 2 months
+                    break;
+                case "QUARTERLY":
+                    billingValue = billingValue * 3; // 3 months
+                    break;
+                case "SEMIANNUALLY":
+                    billingValue = billingValue * 6; // 6 months
+                    break;
+                case "YEARLY":
+                    billingValue = billingValue * 12; // 12 months
+                    break;
+                // MONTHLY: no adjustment needed (default monthly rate)
+            }
+            
             // Apply discount if applicable
             if (discountPercentage > 0) {
                 billingValue = billingValue * (1 - discountPercentage / 100);
@@ -490,7 +513,7 @@ public class UserResource extends BaseObjectResource<User> {
         
         // If no devices have planValue, set a minimum value
         if (total <= 0) {
-            total = 35.0;
+            total = 34.9;
         }
         
         // Format to one decimal place
